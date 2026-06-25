@@ -150,8 +150,12 @@
                     <div class="d-flex justify-content-between align-items-center mb-4">
                         <h3 id="formTitle" class="m-0 fw-bold text-primary" style="font-size: 1.5rem;">🛒 Input
                             Penjualan</h3>
-                        <button type="button" class="btn btn-outline-secondary btn-sm fw-bold shadow-sm"
-                            onclick="bukaManajemenHarga()">⚙️ Atur Produk</button>
+                        <div class="d-flex gap-2">
+                            <a href="gudang.html" class="btn btn-outline-primary btn-sm fw-bold shadow-sm">📦 Masuk
+                                Gudang</a>
+                            <button type="button" class="btn btn-outline-secondary btn-sm fw-bold shadow-sm"
+                                onclick="bukaManajemenHarga()">⚙️ Atur Produk</button>
+                        </div>
                     </div>
 
                     <form id="formPenjualan">
@@ -314,7 +318,8 @@
                         <div class="d-flex gap-2">
                             <button class="btn btn-danger btn-pdf fw-bold shadow-sm" onclick="downloadPDFDataOnly()">📄
                                 Download PDF Data</button>
-                            <button class="btn btn-outline-danger btn-sm" onclick="bersihkanSemuaData()" title="Hapus Data">🗑️</button>
+                            <button class="btn btn-outline-danger btn-sm" onclick="bersihkanSemuaData()"
+                                title="Hapus Data">🗑️</button>
                         </div>
                     </div>
 
@@ -864,7 +869,7 @@
                 btnSelesai.className = "btn btn-secondary btn-lg w-100 fw-bold shadow-sm mt-2 opacity-50";
             }
         }
-        
+
         // 1. Ambil daftar produk dari localStorage agar fleksibel (jika kosong, beri default bawaan)
         function getMasterProduk() {
             let master = JSON.parse(localStorage.getItem('master_produk_toko'));
@@ -885,7 +890,7 @@
             const datalist = document.getElementById('listBarang');
             if (!datalist) return;
             datalist.innerHTML = '';
-            
+
             const daftarProduk = getMasterProduk();
             for (let nama in daftarProduk) {
                 let option = document.createElement('option');
@@ -899,7 +904,7 @@
             const namaInput = document.getElementById('namaBarang').value;
             const inputHarga = document.getElementById('hargaTampilan');
             const daftarProduk = getMasterProduk();
-            
+
             if (daftarProduk.hasOwnProperty(namaInput)) {
                 let harga = daftarProduk[namaInput];
                 hargaAsli = harga;
@@ -916,7 +921,7 @@
         function bukaManajemenHarga() {
             const daftarProduk = getMasterProduk();
             let barisTabel = '';
-            
+
             // Susun baris produk ke dalam HTML tabel internal pop-up
             for (let nama in daftarProduk) {
                 barisTabel += `
@@ -971,7 +976,7 @@
                     // 1. Logika masking format rupiah pada input harga
                     const inputHargaSwal = document.getElementById('swalHargaBarangTampilan');
                     if (inputHargaSwal) {
-                        inputHargaSwal.addEventListener('input', function(e) {
+                        inputHargaSwal.addEventListener('input', function (e) {
                             let nilaiBersih = e.target.value.replace(/\D/g, "");
                             e.target.value = formatRupiah(nilaiBersih);
                         });
@@ -980,10 +985,10 @@
                     // 2. Live Search Filter untuk menyaring baris tabel secara instan
                     const inputSearchSwal = document.getElementById('swalCariProduk');
                     if (inputSearchSwal) {
-                        inputSearchSwal.addEventListener('input', function(e) {
+                        inputSearchSwal.addEventListener('input', function (e) {
                             const kataKunci = e.target.value.toLowerCase().trim();
                             const semuaBaris = document.querySelectorAll('#swalTabelMaster tbody .produk-row');
-                            
+
                             semuaBaris.forEach(row => {
                                 const namaBarangDiBaris = row.getAttribute('data-nama');
                                 if (namaBarangDiBaris.includes(kataKunci)) {
@@ -999,7 +1004,7 @@
         }
 
         // FUNGSI BARU: Menaikkan data dari baris tabel ke form inputan di atasnya saat klik Edit (✏️)
-        window.isiFormMasterProduk = function(nama, harga) {
+        window.isiFormMasterProduk = function (nama, harga) {
             const inputNama = document.getElementById('swalNamaBarang');
             const inputHargaTampilan = document.getElementById('swalHargaBarangTampilan');
             const labelInput = document.getElementById('swalLabelInput');
@@ -1008,19 +1013,19 @@
             if (inputNama && inputHargaTampilan) {
                 inputNama.value = nama;
                 inputHargaTampilan.value = formatRupiah(harga);
-                
+
                 // Ubah teks UI sedikit agar kasir tahu dia sedang dalam mode mengedit
                 labelInput.innerText = "✏️ Edit Produk Terpilih:";
                 btnSimpan.innerText = "💾 Perbarui Data Produk";
                 btnSimpan.className = "btn btn-warning btn-sm w-100 fw-bold shadow-sm";
-                
+
                 // Fokuskan langsung ke input harga agar kasir tinggal mengubah nominalnya
                 inputHargaTampilan.focus();
             }
         };
 
         // FUNGSI PERBAIKAN: Aksi menyimpan data baru dari input pop-upTaro Bubuk A
-        window.simpanMasterProduk = function() {
+        window.simpanMasterProduk = function () {
             const nama = document.getElementById('swalNamaBarang').value.trim();
             // Ambil dari ID input tampilan yang baru, lalu bersihkan titiknya agar kembali jadi angka murni
             const hargaTeks = document.getElementById('swalHargaBarangTampilan').value;
@@ -1034,14 +1039,14 @@
             let master = getMasterProduk();
             master[nama] = harga; // Tambah baru atau overwrite jika nama barang sama
             localStorage.setItem('master_produk_toko', JSON.stringify(master));
-            
+
             buatRekomendasiBarang();
             bukaManajemenHarga(); // Refresh pop-up agar tabelnya terupdate
         };
 
         // 6. Fungsi aksi menghapus produk dari daftar rekomendasi
         // FUNGSI PERBAIKAN: Menghapus produk dari daftar dengan konfirmasi aman SweetAlert2
-        window.hapusMasterProduk = function(namaKey) {
+        window.hapusMasterProduk = function (namaKey) {
             Swal.fire({
                 title: "Hapus Produk Ini?",
                 text: `Produk "${namaKey}" akan dihapus dari daftar rekomendasi harga!`,
@@ -1061,12 +1066,12 @@
                     if (master.hasOwnProperty(namaKey)) {
                         delete master[namaKey];
                         localStorage.setItem('master_produk_toko', JSON.stringify(master));
-                        
+
                         // Segarkan data drop-down dan tabel master di latar belakang
                         buatRekomendasiBarang();
-                        
+
                         // Buka kembali jendela "Atur Produk" agar tabelnya terupdate otomatis
-                        bukaManajemenHarga(); 
+                        bukaManajemenHarga();
 
                         // Tampilkan notifikasi sukses kecil yang menutup sendiri
                         Swal.fire({
