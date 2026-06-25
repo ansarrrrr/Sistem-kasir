@@ -38,17 +38,17 @@
                 
                 <div class="card shadow-sm p-4 text-start">
                     <div class="mb-3">
-                        <label refinement="barcode-result" class="form-label fw-bold">Kode Barcode / ID Produk</label>
+                        <label class="form-label fw-bold">Kode Barcode / ID Produk</label>
                         <input type="text" id="barcode-result" class="form-control bg-light" readonly placeholder="Menunggu scan barcode...">
                     </div>
                     
                     <div class="mb-3">
-                        <label refinement="product-name" class="form-label fw-bold">Nama Produk</label>
-                        <input type="text" id="product-name" class="form-control" placeholder="Nama produk baru / otomatis muncul jika sudah ada">
+                        <label class="form-label fw-bold">Nama Produk</label>
+                        <input type="text" id="product-name" class="form-control" placeholder="Ketik nama produk baru / otomatis muncul jika ada">
                     </div>
 
                     <div class="mb-4">
-                        <label refinement="product-price" class="form-label fw-bold">Harga Jual</label>
+                        <label class="form-label fw-bold">Harga Jual</label>
                         <div class="input-group">
                             <span class="input-group-text">Rp</span>
                             <input type="text" id="product-price-display" inputmode="numeric" class="form-control" placeholder="0">
@@ -78,16 +78,16 @@
             return angka.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
         }
 
-        // Ambil data produk terdaftar dari localStorage agar sinkron dengan kasir (index.html)
+        // Ambil data produk terdaftar dari localStorage
         function getMasterProduk() {
             let master = JSON.parse(localStorage.getItem('master_produk_toko'));
             if (!master) {
-                // Default data awal jika local storage masih kosong
+                // Default data awal menggunakan struktur terikat baru (Nama -> {harga, barcode})
                 master = {
-                    "8992741951114": 15000, // Kopi Kapal Api
-                    "8999999042217": 7000,   // Teh Botol Sosro
-                    "8992696404413": 3500,   // Indomie Goreng
-                    "711844332112": 6000     // Susu Ultra Milk
+                    "Kopi Kapal Api Mantap 165g": { harga: 15000, barcode: "8992741951114" },
+                    "Teh Botol Sosro 450ml": { harga: 7000, barcode: "8999999042217" },
+                    "Indomie Goreng Spesial": { harga: 3500, barcode: "8992696404413" },
+                    "Susu Ultra Milk Cokelat 250ml": { harga: 6000, barcode: "711844332112" }
                 };
                 localStorage.setItem('master_produk_toko', JSON.stringify(master));
             }
@@ -97,24 +97,31 @@
         // Fungsi yang berjalan saat barcode berhasil di-scan kamera
         function onScanSuccess(decodedText, decodedResult) {
             document.getElementById('barcode-result').value = decodedText;
-            
             const databaseProduk = getMasterProduk();
             
-            // Jika kode barcode sudah pernah terdaftar sebelumnya, lakukan auto-fill data lama
-            if (databaseProduk[decodedText]) {
-                // Pada sistem kasir Anda, key database berupa nama barang/kode barcode.
-                // Kita set nama produk default ke kode barcode tersebut atau biarkan user memperbaruinya.
-                document.getElementById('product-name').value = decodedText;
-                hargaAsli = databaseProduk[decodedText];
+            // Cari apakah ada produk yang memiliki barcode ini
+            let produkDitemukan = null;
+            let namaProdukDitemukan = "";
+            
+            for (let nama in databaseProduk) {
+                if (databaseProduk[nama].barcode === decodedText) {
+                    produkDitemukan = databaseProduk[nama];
+                    namaProdukDitemukan = nama;
+                    break;
+                }
+            }
+            
+            if (produkDitemukan) {
+                document.getElementById('product-name').value = namaProdukDitemukan;
+                hargaAsli = produkDitemukan.harga;
                 inputHargaTampilan.value = formatRupiah(hargaAsli);
 
                 Swal.fire({
                     toast: true, position: 'top-end', icon: 'info',
-                    title: `Produk Terdaftar! Harga: Rp ${formatRupiah(hargaAsli)}`,
+                    title: `Produk Ditemukan: ${namaProdukDitemukan}`,
                     showConfirmButton: false, timer: 1500
                 });
             } else {
-                // Jika benar-benar produk baru
                 document.getElementById('product-name').value = "";
                 document.getElementById('product-name').placeholder = "Produk baru! Ketik nama produk disini...";
                 inputHargaTampilan.value = "";
@@ -123,23 +130,21 @@
 
                 Swal.fire({
                     toast: true, position: 'top-end', icon: 'success',
-                    title: "Barcode Terdeteksi! Silakan isi detail produk.",
+                    title: "Barcode Terdeteksi! Silakan isi detail produk baru.",
                     showConfirmButton: false, timer: 2000
                 });
             }
         }
 
         function onScanFailure(error) {
-            // Dibiarkan kosong agar tidak memenuhi log console browser harian
+            // Dibiarkan kosong
         }
 
-        // Menjalankan Kamera Scanner otomatis saat halaman dimuat
         let html5QrcodeScanner = new Html5QrcodeScanner(
             "reader", { fps: 15, qrbox: { width: 250, height: 150 } }
         );
         html5QrcodeScanner.render(onScanSuccess, onScanFailure);
 
-        // Fungsi Tombol Simpan Produk Ke LocalStorage
         function simpanDataGudang() {
             const barcode = document.getElementById('barcode-result').value.trim();
             const namaProduk = document.getElementById('product-name').value.trim();
@@ -148,36 +153,32 @@
                 Swal.fire({ icon: 'warning', title: 'Belum Ada Barcode', text: 'Silakan scan barcode produk terlebih dahulu!' });
                 return;
             }
-
             if (!namaProduk || hargaAsli <= 0) {
-                Swal.fire({ icon: 'warning', title: 'Data Belum Lengkap', text: 'Pastikan Nama Produk dan Harga Jual sudah diisi dengan benar!' });
+                Swal.fire({ icon: 'warning', title: 'Data Belum Lengkap', text: 'Pastikan Nama Produk dan Harga Jual sudah diisi!' });
                 return;
             }
 
-            // Ambil database lama, masukkan data baru, lalu simpan kembali
             let databaseProduk = getMasterProduk();
             
-            // Menyimpan relasi: Nama Barang / Kode Barcode => Harga (Sesuai struktur index.html)
-            databaseProduk[namaProduk] = hargaAsli;
-            
-            // Jika kasir melakukan scan berbasis kode angka murni, kita daftarkan juga kodenya agar bisa dicari kedua arah
-            if(namaProduk !== barcode) {
-                databaseProduk[barcode] = hargaAsli;
-            }
+            // Simpan data dengan format terstruktur baru
+            databaseProduk[namaProduk] = {
+                harga: hargaAsli,
+                barcode: barcode
+            };
 
             localStorage.setItem('master_produk_toko', JSON.stringify(databaseProduk));
 
             Swal.fire({
                 icon: 'success',
                 title: 'Berhasil Disimpan! 🎉',
-                text: `Produk "${namaProduk}" sekarang aktif dan dapat digunakan di halaman Kasir.`,
+                text: `Produk "${namaProduk}" dengan barcode [${barcode}] telah disimpan.`,
                 confirmButtonColor: '#198754'
             });
 
-            // Reset form input untuk scan item selanjutnya
+            // Reset Form
             document.getElementById('barcode-result').value = "";
             document.getElementById('product-name').value = "";
-            document.getElementById('product-name').placeholder = "Nama produk baru / otomatis muncul jika sudah ada";
+            document.getElementById('product-name').placeholder = "Nama produk baru / otomatis muncul jika ada";
             inputHargaTampilan.value = "";
             hargaAsli = 0;
         }
