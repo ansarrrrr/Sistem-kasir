@@ -1142,50 +1142,55 @@
         }
 
         function onScanKasirSuccess(decodedText, decodedResult) {
-            let master = getMasterProduk(); // Ambil data dari localStorage master_produk_toko
-            let ditemukan = false;
+    let master = getMasterProduk(); // Ambil data dari localStorage master_produk_toko
+    let ditemukan = false;
 
-            // Cari di master produk apakah ada nama barang yang mengandung kode barcode ini [KODE]
-            for (let namaKey in master) {
-                if (namaKey.includes(`[${decodedText}]`)) {
-                    // Set input nama barang dan harga otomatis
-                    document.getElementById('namaBarang').value = namaKey;
-                    document.getElementById('hargaSatuan').value = formatRupiah(master[namaKey]);
+    // Cari di master produk apakah ada nama barang yang mengandung kode barcode ini [KODE]
+    for (let namaKey in master) {
+        if (namaKey.includes(`[${decodedText}]`)) {
+            
+            // Bersihkan nama produk agar yang muncul HANYA NAMA PRODUKNYA SAJA
+            // Contoh: "Kopi Kapal Api [8992741951114]" menjadi "Kopi Kapal Api"
+            let namaProdukSaja = namaKey.split(' [')[0].trim();
 
-                    // Trigger kalkulasi total otomatis (karena fungsi bawaan index.html kamu menggunakan event listener/hitung otomatis)
-                    document.getElementById('jumlahJual').focus();
+            // Set input nama barang dan harga otomatis sesuai data Atur Produk
+            document.getElementById('namaBarang').value = namaProdukSaja;
+            document.getElementById('hargaSatuan').value = formatRupiah(master[namaKey]);
+            
+            // Trigger kalkulasi total otomatis dengan memindahkan fokus ke Jumlah Jual
+            document.getElementById('jumlahJual').focus(); 
+            
+            ditemukan = true;
 
-                    ditemukan = true;
+            // Efek suara beep sukses (opsional)
+            try {
+                let context = new AudioContext();
+                let osc = context.createOscillator();
+                osc.connect(context.destination);
+                osc.start(); osc.stop(context.currentTime + 0.08);
+            } catch(e) {}
 
-                    // Efek suara beep sukses (opsional)
-                    try {
-                        let context = new AudioContext();
-                        let osc = context.createOscillator();
-                        osc.connect(context.destination);
-                        osc.start(); osc.stop(context.currentTime + 0.08);
-                    } catch (e) { }
-
-                    Swal.fire({
-                        toast: true,
-                        position: 'top-end',
-                        icon: 'success',
-                        title: 'Produk Otomatis Terisi!',
-                        showConfirmButton: false,
-                        timer: 1000
-                    });
-                    break;
-                }
-            }
-
-            if (!ditemukan) {
-                Swal.fire({
-                    title: "Produk Belum Terdaftar",
-                    text: `Barcode [${decodedText}] belum ada di sistem. Silakan daftarkan dulu di Scanner Gudang.`,
-                    icon: "warning",
-                    confirmButtonText: "Mengerti"
-                });
-            }
+            Swal.fire({
+                toast: true,
+                position: 'top-end',
+                icon: 'success',
+                title: 'Produk & Harga Otomatis Terisi!',
+                showConfirmButton: false,
+                timer: 1200
+            });
+            break;
         }
+    }
+
+    if (!ditemukan) {
+        Swal.fire({
+            title: "Produk Belum Terdaftar",
+            text: `Barcode [${decodedText}] belum ada di sistem. Silakan daftarkan dulu di Scanner Gudang.`,
+            icon: "warning",
+            confirmButtonText: "Mengerti"
+        });
+    }
+}
 
         function onScanKasirFailure(error) {
             // Dibiarkan kosong agar tidak spam log
