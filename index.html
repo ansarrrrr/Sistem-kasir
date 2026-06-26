@@ -161,12 +161,26 @@
                     <form id="formPenjualan">
                         <input type="hidden" id="rowId" value="">
 
-                        <div class="mb-3">
+                        <div class="mb-3 position-relative">
+                            <label for="namaBarang" class="form-label fw-bold">Nama Barang / Scan Barcode</label>
+
+                            <div id="reader-kasir" class="mb-2 d-none"
+                                style="border: 2px dashed #0d6efd; border-radius: 8px; overflow: hidden;"></div>
+                            <button type="button" id="btn-toggle-camera"
+                                class="btn btn-sm btn-outline-secondary w-100 mb-2 fw-bold"
+                                onclick="toggleKameraKasir()">📷 Aktifkan Scanner Barcode</button>
+
+                            <input type="text" class="form-control" id="namaBarang"
+                                placeholder="Ketik nama atau Scan Barcode langsung..." autocomplete="off">
+                            <div id="rekomendasiList" class="list-group rekomendasi-dropdown"></div>
+                        </div>
+
+                        <!-- <div class="mb-3">
                             <label class="form-label fw-semibold">Nama Barang</label>
                             <input type="text" id="namaBarang" class="form-control" placeholder="Contoh: Kopi Susu"
                                 list="listBarang" oninput="autoFillHarga()" required>
                             <datalist id="listBarang"></datalist>
-                        </div>
+                        </div> -->
 
                         <div class="mb-3">
                             <label class="form-label fw-semibold">Harga Barang</label>
@@ -1089,7 +1103,98 @@
                 }
             });
         };
+
+        // ================= SCRIPT SCANNER BARCODE KASIR =================
+        let html5QrcodeScannerKasir = null;
+
+        function toggleKameraKasir() {
+            const readerDiv = document.getElementById('reader-kasir');
+            const btnCam = document.getElementById('btn-toggle-camera');
+
+            if (readerDiv.classList.contains('d-none')) {
+                // Tampilkan kotak kamera
+                readerDiv.classList.remove('d-none');
+                btnCam.innerText = "🛑 Matikan Scanner Barcode";
+                btnCam.classList.replace('btn-outline-secondary', 'btn-outline-danger');
+
+                // Jalankan Scanner
+                html5QrcodeScannerKasir = new Html5QrcodeScanner(
+                    "reader-kasir", { fps: 15, qrbox: { width: 250, height: 130 } }
+                );
+                html5QrcodeScannerKasir.render(onScanKasirSuccess, onScanKasirFailure);
+            } else {
+                // Matikan Scanner jika tombol diklik lagi
+                matikanKameraKasir();
+            }
+        }
+
+        function matikanKameraKasir() {
+            const readerDiv = document.getElementById('reader-kasir');
+            const btnCam = document.getElementById('btn-toggle-camera');
+
+            if (html5QrcodeScannerKasir) {
+                html5QrcodeScannerKasir.clear().then(() => {
+                    readerDiv.classList.add('d-none');
+                    btnCam.innerText = "📷 Aktifkan Scanner Barcode";
+                    btnCam.classList.replace('btn-outline-danger', 'btn-outline-secondary');
+                }).catch(err => console.error("Gagal mematikan kamera:", err));
+            }
+        }
+
+        function onScanKasirSuccess(decodedText, decodedResult) {
+            let master = getMasterProduk(); // Ambil data dari localStorage master_produk_toko
+            let ditemukan = false;
+
+            // Cari di master produk apakah ada nama barang yang mengandung kode barcode ini [KODE]
+            for (let namaKey in master) {
+                if (namaKey.includes(`[${decodedText}]`)) {
+                    // Set input nama barang dan harga otomatis
+                    document.getElementById('namaBarang').value = namaKey;
+                    document.getElementById('hargaSatuan').value = formatRupiah(master[namaKey]);
+
+                    // Trigger kalkulasi total otomatis (karena fungsi bawaan index.html kamu menggunakan event listener/hitung otomatis)
+                    document.getElementById('jumlahJual').focus();
+
+                    ditemukan = true;
+
+                    // Efek suara beep sukses (opsional)
+                    try {
+                        let context = new AudioContext();
+                        let osc = context.createOscillator();
+                        osc.connect(context.destination);
+                        osc.start(); osc.stop(context.currentTime + 0.08);
+                    } catch (e) { }
+
+                    Swal.fire({
+                        toast: true,
+                        position: 'top-end',
+                        icon: 'success',
+                        title: 'Produk Otomatis Terisi!',
+                        showConfirmButton: false,
+                        timer: 1000
+                    });
+                    break;
+                }
+            }
+
+            if (!ditemukan) {
+                Swal.fire({
+                    title: "Produk Belum Terdaftar",
+                    text: `Barcode [${decodedText}] belum ada di sistem. Silakan daftarkan dulu di Scanner Gudang.`,
+                    icon: "warning",
+                    confirmButtonText: "Mengerti"
+                });
+            }
+        }
+
+        function onScanKasirFailure(error) {
+            // Dibiarkan kosong agar tidak spam log
+        }
     </script>
+
+    <script src="https://unpkg.com/html5-qrcode"></script>
+
+
 </body>
 
 </html>
