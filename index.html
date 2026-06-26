@@ -871,9 +871,14 @@
         }
 
         // 1. Ambil daftar produk dari localStorage agar fleksibel (jika kosong, beri default bawaan)
+        // ==========================================================================
+        // FITUR UTAMA MANAGEMENT HARGA & BARCODE BARANG (LOCALSTORAGE) VIA SWAL2
+        // ==========================================================================
+
         function getMasterProduk() {
             let master = JSON.parse(localStorage.getItem('master_produk_toko'));
             if (!master) {
+                // Struktur data baru: Nama Produk -> { harga, barcode }
                 master = {
                     "Kopi Kapal Api Mantap 165g": { harga: 15000, barcode: "8992741951114" },
                     "Teh Botol Sosro 450ml": { harga: 7000, barcode: "8999999042217" },
@@ -885,7 +890,6 @@
             return master;
         }
 
-        // 2. Fungsi memperbarui rekomendasi drop-down datalist di HTML
         function buatRekomendasiBarang() {
             const datalist = document.getElementById('listBarang');
             if (!datalist) return;
@@ -893,12 +897,12 @@
             
             const daftarProduk = getMasterProduk();
             for (let nama in daftarProduk) {
-                // Daftarkan nama produk ke datalist autocomplete
+                // Masukkan nama produk ke datalist autocomplete kasir
                 let optionNama = document.createElement('option');
                 optionNama.value = nama;
                 datalist.appendChild(optionNama);
 
-                // Tetap daftarkan nomor barcodenya juga agar jika diketik manual/di-scan, datalist kasir bisa mendeteksi
+                // Masukkan juga nomor barcodenya agar kasir bisa ketik/scan langsung di input utama
                 if (daftarProduk[nama].barcode) {
                     let optionBarcode = document.createElement('option');
                     optionBarcode.value = daftarProduk[nama].barcode;
@@ -907,13 +911,14 @@
             }
         }
 
-        // 3. Fungsi Auto-fill harga ketika kasir mengetik/memilih nama barang
         function autoFillHarga() {
             const namaInput = document.getElementById('namaBarang').value.trim();
             const inputHarga = document.getElementById('hargaTampilan');
+            if (!namaInput) return;
+
             const daftarProduk = getMasterProduk();
             
-            // Cek pencarian berdasarkan Nama Utama langsung
+            // 1. Cek langsung apakah input berupa Nama Produk
             if (daftarProduk.hasOwnProperty(namaInput)) {
                 let harga = daftarProduk[namaInput].harga;
                 hargaAsli = harga;
@@ -922,10 +927,10 @@
                 return;
             }
 
-            // Jika yang dimasukkan/di-scan adalah kode barcodenya, cari nama produknya
+            // 2. Jika tidak ada, cek apakah input tersebut adalah nomor Barcode produk
             for (let nama in daftarProduk) {
                 if (daftarProduk[nama].barcode === namaInput) {
-                    document.getElementById('namaBarang').value = nama; // set nama barang asli ke input kasir
+                    document.getElementById('namaBarang').value = nama; // Ganti input menjadi Nama Produk asli
                     let harga = daftarProduk[nama].harga;
                     hargaAsli = harga;
                     inputHarga.value = formatRupiah(harga);
@@ -935,11 +940,6 @@
             }
         }
 
-        // 4. FUNGSI UTAMA: Pop-up interaktif untuk menambah/mengedit produk & harga dari layar
-        // FUNGSI PERBAIKAN: Pop-up interaktif untuk mengatur produk & harga dari layar
-        // FUNGSI PERBAIKAN: Pop-up interaktif untuk mengatur produk & harga dengan fitur SEARCH
-        // FUNGSI PERBAIKAN: Pop-up interaktif untuk mengatur produk & harga dengan SEARCH + EDIT + HAPUS
-        // FUNGSI PERBAIKAN: Pop-up interaktif untuk mengatur produk & harga dengan SEARCH + EDIT + HAPUS
         function bukaManajemenHarga() {
             const daftarProduk = getMasterProduk();
             let barisTabel = '';
@@ -956,8 +956,8 @@
                         </td>
                         <td class="text-end align-middle small fw-bold text-success">Rp ${formatRupiah(hargaProduk)}</td>
                         <td class="text-center align-middle">
-                            <button class="btn btn-warning btn-sm p-1 py-0 shadow-sm me-1" title="Edit" onclick="isiFormMasterProduk('${nama}', ${hargaProduk}, '${barcodeTampil}')">✏️</button>
-                            <button class="btn btn-danger btn-sm p-1 py-0 shadow-sm" title="Hapus" onclick="hapusMasterProduk('${nama}')">🗑️</button>
+                            <button type="button" class="btn btn-warning btn-sm p-1 py-0 shadow-sm me-1" title="Edit" onclick="isiFormMasterProduk('${nama.replace(/'/g, "\\'")}', ${hargaProduk}, '${barcodeTampil}')">✏️</button>
+                            <button type="button" class="btn btn-danger btn-sm p-1 py-0 shadow-sm" title="Hapus" onclick="hapusMasterProduk('${nama.replace(/'/g, "\\'")}')">🗑️</button>
                         </td>
                     </tr>
                 `;
@@ -972,7 +972,7 @@
                             <input type="text" id="swalNamaBarang" class="form-control form-control-sm mb-2" placeholder="Nama Barang Baru">
                             <input type="text" id="swalBarcodeBarang" class="form-control form-control-sm mb-2" placeholder="Kode Barcode (Opsional)">
                             <input type="text" id="swalHargaBarangTampilan" inputmode="numeric" class="form-control form-control-sm mb-2" placeholder="Harga Satuan (Misal: 5.000)">
-                            <button class="btn btn-primary btn-sm w-100 fw-bold" id="swalBtnSimpan" onclick="simpanMasterProduk()">💾 Simpan ke Sistem</button>
+                            <button type="button" class="btn btn-primary btn-sm w-100 fw-bold" id="swalBtnSimpan" onclick="simpanMasterProduk()">💾 Simpan ke Sistem</button>
                         </div>
 
                         <div class="mb-2">
@@ -1028,8 +1028,7 @@
             });
         }
 
-        // FUNGSI BARU: Menaikkan data dari baris tabel ke form inputan di atasnya saat klik Edit (✏️)
-        window.isiFormMasterProduk = function(nama, harga, barcode) {
+        function isiFormMasterProduk(nama, harga, barcode) {
             const inputNama = document.getElementById('swalNamaBarang');
             const inputBarcode = document.getElementById('swalBarcodeBarang');
             const inputHargaTampilan = document.getElementById('swalHargaBarangTampilan');
@@ -1047,17 +1046,16 @@
                 
                 inputHargaTampilan.focus();
             }
-        };
+        }
 
-        // FUNGSI PERBAIKAN: Aksi menyimpan data baru dari input pop-upTaro Bubuk A
-        window.simpanMasterProduk = function() {
+        function simpanMasterProduk() {
             const nama = document.getElementById('swalNamaBarang').value.trim();
             const barcode = document.getElementById('swalBarcodeBarang').value.trim();
             const hargaTeks = document.getElementById('swalHargaBarangTampilan').value;
             const harga = Number(hargaTeks.replace(/\D/g, "")) || 0;
 
             if (!nama || harga <= 0) {
-                alert("Nama harus diisi dan harga harus lebih dari 0!");
+                alert("Nama barang harus diisi dan harga harus lebih dari 0!");
                 return;
             }
 
@@ -1070,12 +1068,10 @@
             localStorage.setItem('master_produk_toko', JSON.stringify(master));
             
             buatRekomendasiBarang();
-            bukaManajemenHarga();
-        };
+            bukaManajemenHarga(); // Refresh modal Swal harganya
+        }
 
-        // 6. Fungsi aksi menghapus produk dari daftar rekomendasi
-        // FUNGSI PERBAIKAN: Menghapus produk dari daftar dengan konfirmasi aman SweetAlert2
-        window.hapusMasterProduk = function(namaKey) {
+        function hapusMasterProduk(namaKey) {
             Swal.fire({
                 title: "Hapus Produk Ini?",
                 text: `Produk "${namaKey}" akan dihapus dari daftar harga!`,
@@ -1109,7 +1105,7 @@
                     bukaManajemenHarga();
                 }
             });
-        };
+        }
     </script>
 </body>
 
