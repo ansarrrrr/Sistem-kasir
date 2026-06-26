@@ -292,21 +292,18 @@
                     <h5 class="fw-bold text-warning mb-3">🔍 Validasi & Cek Uang Fisik Laci (Cash)</h5>
                     <div class="row align-items-center g-3">
                         <div class="col-12 col-sm-6">
-                            <label class="form-label small fw-bold text-secondary">Masukkan Total Uang Cash Nyata di
-                                Laci:</label>
+                            <label class="form-label small fw-bold text-secondary">Masukkan Total Uang Cash Nyata di Laci:</label>
                             <div class="input-group">
                                 <span class="input-group-text bg-warning text-dark">Rp</span>
-                                <input type="text" id="uangFisikTampilan" inputmode="numeric"
-                                    class="form-control form-control-lg border-warning"
-                                    placeholder="Masukkan uang di laci...">
+                                <input type="text" id="uangFisikTampilan" inputmode="numeric" class="form-control form-control-lg border-warning" placeholder="Masukkan uang di laci...">
+                                <button class="btn btn-outline-warning text-danger fw-bold" type="button" onclick="document.getElementById('uangFisikTampilan').value = ''; uangFisikAsli = 0; hitungSelisihLaci();" title="Kosongkan Uang Fisik">❌</button>
                             </div>
                         </div>
                         <div class="col-12 col-sm-6 text-sm-start">
                             <div class="p-2 rounded bg-light border">
                                 <div class="small fw-semibold text-muted">Selisih / Status Laci:</div>
                                 <div class="d-flex align-items-center mt-1">
-                                    <span id="statusLaciBadge" class="status-badge bg-secondary text-white me-2">Belum
-                                        Diinput</span>
+                                    <span id="statusLaciBadge" class="status-badge bg-secondary text-white me-2">Belum Diinput</span>
                                     <h4 class="m-0 fw-bold" id="textSelisih">Rp 0</h4>
                                 </div>
                             </div>
@@ -683,7 +680,7 @@
             muatDataLokal();
         }
 
-        function siapEdit(index, nama, harga, jumlah, pembayaran) {
+        function siapEdit(index, nama, price, jumlah, pembayaran) {
             antreanKeranjangSeketika = [];
 
             document.getElementById('formTitle').innerText = "✏️ Edit Penjualan";
@@ -696,8 +693,8 @@
 
             document.getElementById('rowId').value = index;
             document.getElementById('namaBarang').value = nama;
-            inputHargaTampilan.value = formatRupiah(harga);
-            hargaAsli = harga;
+            inputHargaTampilan.value = formatRupiah(price);
+            hargaAsli = price;
             inputJumlah.value = jumlah;
             document.getElementById('jenisPembayaran').value = pembayaran;
 
