@@ -159,8 +159,11 @@
 
                         <div class="mb-3">
                             <label class="form-label fw-semibold">Nama Barang</label>
-                            <input type="text" id="namaBarang" class="form-control" placeholder="Contoh: Kopi Susu"
-                                list="listBarang" oninput="autoFillHarga()" required>
+                            <div class="input-group">
+                                <input type="text" id="namaBarang" class="form-control" placeholder="Contoh: Kopi Susu"
+                                    list="listBarang" oninput="autoFillHarga()" required>
+                                <button class="btn btn-outline-secondary text-danger" type="button" onclick="document.getElementById('namaBarang').value = ''; document.getElementById('namaBarang').focus();" title="Kosongkan Nama">❌</button>
+                            </div>
                             <datalist id="listBarang"></datalist>
                         </div>
 
@@ -170,13 +173,16 @@
                                 <span class="input-group-text">Rp</span>
                                 <input type="text" id="hargaTampilan" inputmode="numeric" class="form-control"
                                     placeholder="0" required>
+                                <button class="btn btn-outline-secondary text-danger" type="button" onclick="document.getElementById('hargaTampilan').value = ''; hargaAsli = 0; hitungKalkulatorSeketika();" title="Kosongkan Harga">❌</button>
                             </div>
                         </div>
 
                         <div class="mb-3">
                             <label class="form-label fw-semibold">Jumlah Pembelian</label>
-                            <input type="number" id="jumlahPembelian" class="form-control" placeholder="0" min="1"
-                                required>
+                            <div class="input-group">
+                                <input type="number" id="jumlahPembelian" class="form-control" placeholder="0" min="1" required>
+                                <button class="btn btn-outline-secondary text-danger" type="button" onclick="document.getElementById('jumlahPembelian').value = ''; hitungKalkulatorSeketika();" title="Kosongkan Jumlah">❌</button>
+                            </div>
                         </div>
 
                         <div class="d-flex justify-content-between align-items-center mb-3 px-1">
@@ -504,8 +510,6 @@
             let nomorUrut = 1;
 
             dataPenjualan.forEach((item, index) => {
-                // Ambil nilai cash/tf riil untuk akumulasi kotak omset atas
-                // Jika data lama belum punya properti dibayarCash, lakukan fallback ke sistem lama
                 let cashRiil = item.hasOwnProperty('dibayarCash') ? item.dibayarCash : (item.jenisPembayaran === "Cash" ? item.hargaBarang * item.jumlahPembelian : 0);
                 let tfRiil = item.hasOwnProperty('dibayarTF') ? item.dibayarTF : (item.jenisPembayaran === "TF" ? item.hargaBarang * item.jumlahPembelian : 0);
 
@@ -514,11 +518,9 @@
 
                 let totalHargaItem = item.hargaBarang * item.jumlahPembelian;
 
-                // Atur tampilan visual text badge di kolom pembayaran
                 let tampilMetode = item.jenisPembayaran;
                 if (tampilMetode === "Cash") tampilMetode = "💵 Cash";
                 else if (tampilMetode === "TF") tampilMetode = "📱 TF";
-                // Jika mengandung teks split kombinasi, biarkan teks custom-nya yang muncul
 
                 tbody.innerHTML += `
                 <tr>
@@ -565,7 +567,6 @@
                 };
                 localStorage.setItem('data_kasir_lokal', JSON.stringify(dataPenjualan));
 
-                // Ganti alert('Data berhasil diperbarui!'); dengan ini:
                 Swal.fire({
                     title: "Berhasil Diperbarui!",
                     text: "Data transaksi telah sukses diubah.",
@@ -603,7 +604,6 @@
             document.getElementById('btnSimpan').innerText = "➕ Tambah Barang Lagi";
             document.getElementById('btnSimpan').className = "btn btn-outline-primary btn-lg w-100 fw-bold shadow-sm";
 
-            // Re-validasi tampilan tombol selesai setelah barang baru bertambah
             aturTampilanInputPembayaran();
         });
 
@@ -614,7 +614,6 @@
             const checkSplitTF = document.getElementById('checkSplitTF');
 
             if (!jenisBayar && !checkSplitTF.checked) {
-                // REVISI: Ganti alert validasi jenis pembayaran kosong dengan SweetAlert2
                 Swal.fire({
                     title: "Metode Belum Dipilih",
                     text: "Silakan pilih Jenis Pembayaran (Cash/TF) terlebih dahulu sebelum menyelesaikan transaksi!",
@@ -668,12 +667,11 @@
 
             localStorage.setItem('data_kasir_lokal', JSON.stringify(dataPenjualanUtama));
 
-            // REVISI UTAMA: Ganti alert sukses simpan lama dengan animasi SweetAlert2 yang mewah
             Swal.fire({
                 title: "Transaksi Sukses! 🎉",
                 text: "Semua data penjualan berhasil disimpan ke dalam sistem harian.",
                 icon: "success",
-                timer: 2000, // Notifikasi akan menutup otomatis dalam 2 detik
+                timer: 2000,
                 showConfirmButton: false,
                 customClass: {
                     popup: 'rounded-4'
@@ -705,7 +703,6 @@
 
             perbaruiTampilanRincian();
 
-            // Sinkronkan tampilan input agar menyesuaikan jenis pembayaran data lama yang sedang diedit
             aturTampilanInputPembayaran();
 
             document.getElementById('boxSplitPembayaran').classList.add('d-none');
@@ -723,7 +720,7 @@
                 confirmButtonText: "Ya, Hapus!",
                 cancelButtonText: "Batal",
                 customClass: {
-                    popup: 'rounded-4' // Membuat sudut kotak jadi melengkung estetik
+                    popup: 'rounded-4'
                 }
             }).then((result) => {
                 if (result.isConfirmed) {
@@ -732,7 +729,6 @@
                     localStorage.setItem('data_kasir_lokal', JSON.stringify(dataPenjualan));
                     muatDataLokal();
 
-                    // Notifikasi sukses setelah berhasil dihapus
                     Swal.fire({
                         title: "Terhapus!",
                         text: "Data berhasil dihapus.",
@@ -808,7 +804,6 @@
             document.getElementById('boxSplitPembayaran').classList.add('d-none');
             document.getElementById('checkSplitTF').checked = false;
 
-            // Sembunyikan area cash secara default mengikuti state dropdown pembayaran yang kembali kosong
             aturTampilanInputPembayaran();
             buatRekomendasiBarang();
         }
@@ -828,19 +823,16 @@
             const btnSelesai = document.getElementById('btnSelesaiMulti');
             const boxJenisPembayaran = document.getElementById('boxJenisPembayaran');
 
-            // KONDISI BARU: Sembunyikan dropdown Jenis Pembayaran jika antrean keranjang masih kosong
             if (antreanKeranjangSeketika.length === 0) {
                 boxJenisPembayaran.style.display = 'none';
                 areaInputCash.style.display = 'none';
                 btnSelesai.disabled = true;
                 btnSelesai.className = "btn btn-secondary btn-lg w-100 fw-bold shadow-sm mt-2 opacity-50";
-                return; // Berhenti di sini, jangan eksekusi logika di bawahnya
+                return;
             } else {
-                // Tampilkan dropdown Jenis Pembayaran jika sudah ada barang di antrean
                 boxJenisPembayaran.style.display = 'block';
             }
 
-            // Logika bawaan yang sudah ada sebelumnya (tetap dipertahankan)
             if (jenisBayar === "Cash") {
                 areaInputCash.style.display = 'block';
                 hitungKalkulatorSeketika();
@@ -865,11 +857,9 @@
             }
         }
         
-        // 1. Ambil daftar produk dari localStorage agar fleksibel (jika kosong, beri default bawaan)
         function getMasterProduk() {
             let master = JSON.parse(localStorage.getItem('master_produk_toko'));
             if (!master) {
-                // Default awal jika aplikasi baru pertama kali dibuka
                 master = {
                     "Matcha Bubuk B": 16000,
                     "Taro Bubuk A": 20000,
@@ -880,7 +870,6 @@
             return master;
         }
 
-        // 2. Fungsi memperbarui rekomendasi drop-down datalist di HTML
         function buatRekomendasiBarang() {
             const datalist = document.getElementById('listBarang');
             if (!datalist) return;
@@ -894,7 +883,6 @@
             }
         }
 
-        // 3. Fungsi Auto-fill harga ketika kasir mengetik/memilih nama barang
         function autoFillHarga() {
             const namaInput = document.getElementById('namaBarang').value;
             const inputHarga = document.getElementById('hargaTampilan');
@@ -908,16 +896,10 @@
             }
         }
 
-        // 4. FUNGSI UTAMA: Pop-up interaktif untuk menambah/mengedit produk & harga dari layar
-        // FUNGSI PERBAIKAN: Pop-up interaktif untuk mengatur produk & harga dari layar
-        // FUNGSI PERBAIKAN: Pop-up interaktif untuk mengatur produk & harga dengan fitur SEARCH
-        // FUNGSI PERBAIKAN: Pop-up interaktif untuk mengatur produk & harga dengan SEARCH + EDIT + HAPUS
-        // FUNGSI PERBAIKAN: Pop-up interaktif untuk mengatur produk & harga dengan SEARCH + EDIT + HAPUS
         function bukaManajemenHarga() {
             const daftarProduk = getMasterProduk();
             let barisTabel = '';
             
-            // Susun baris produk ke dalam HTML tabel internal pop-up
             for (let nama in daftarProduk) {
                 barisTabel += `
                     <tr class="produk-row" data-nama="${nama.toLowerCase()}">
@@ -931,7 +913,6 @@
                 `;
             }
 
-            // Tampilkan dialog SweetAlert2 berupa Form Input Manajemen Produk + Kolom Search
             Swal.fire({
                 title: "⚙️ Atur Daftar Produk & Harga",
                 html: `
@@ -968,7 +949,6 @@
                 confirmButtonColor: "#6c757d",
                 customClass: { popup: 'rounded-4' },
                 didOpen: () => {
-                    // 1. Logika masking format rupiah pada input harga
                     const inputHargaSwal = document.getElementById('swalHargaBarangTampilan');
                     if (inputHargaSwal) {
                         inputHargaSwal.addEventListener('input', function(e) {
@@ -977,7 +957,6 @@
                         });
                     }
 
-                    // 2. Live Search Filter untuk menyaring baris tabel secara instan
                     const inputSearchSwal = document.getElementById('swalCariProduk');
                     if (inputSearchSwal) {
                         inputSearchSwal.addEventListener('input', function(e) {
@@ -998,7 +977,6 @@
             });
         }
 
-        // FUNGSI BARU: Menaikkan data dari baris tabel ke form inputan di atasnya saat klik Edit (✏️)
         window.isiFormMasterProduk = function(nama, harga) {
             const inputNama = document.getElementById('swalNamaBarang');
             const inputHargaTampilan = document.getElementById('swalHargaBarangTampilan');
@@ -1009,20 +987,16 @@
                 inputNama.value = nama;
                 inputHargaTampilan.value = formatRupiah(harga);
                 
-                // Ubah teks UI sedikit agar kasir tahu dia sedang dalam mode mengedit
                 labelInput.innerText = "✏️ Edit Produk Terpilih:";
                 btnSimpan.innerText = "💾 Perbarui Data Produk";
                 btnSimpan.className = "btn btn-warning btn-sm w-100 fw-bold shadow-sm";
                 
-                // Fokuskan langsung ke input harga agar kasir tinggal mengubah nominalnya
                 inputHargaTampilan.focus();
             }
         };
 
-        // FUNGSI PERBAIKAN: Aksi menyimpan data baru dari input pop-upTaro Bubuk A
         window.simpanMasterProduk = function() {
             const nama = document.getElementById('swalNamaBarang').value.trim();
-            // Ambil dari ID input tampilan yang baru, lalu bersihkan titiknya agar kembali jadi angka murni
             const hargaTeks = document.getElementById('swalHargaBarangTampilan').value;
             const harga = Number(hargaTeks.replace(/\D/g, "")) || 0;
 
@@ -1032,15 +1006,13 @@
             }
 
             let master = getMasterProduk();
-            master[nama] = harga; // Tambah baru atau overwrite jika nama barang sama
+            master[nama] = harga;
             localStorage.setItem('master_produk_toko', JSON.stringify(master));
             
             buatRekomendasiBarang();
-            bukaManajemenHarga(); // Refresh pop-up agar tabelnya terupdate
+            bukaManajemenHarga();
         };
 
-        // 6. Fungsi aksi menghapus produk dari daftar rekomendasi
-        // FUNGSI PERBAIKAN: Menghapus produk dari daftar dengan konfirmasi aman SweetAlert2
         window.hapusMasterProduk = function(namaKey) {
             Swal.fire({
                 title: "Hapus Produk Ini?",
@@ -1052,23 +1024,18 @@
                 confirmButtonText: "Ya, Hapus!",
                 cancelButtonText: "Batal",
                 customClass: {
-                    popup: 'rounded-4' // Tetap melengkung estetik serasi dengan pop-up lainnya
+                    popup: 'rounded-4'
                 }
             }).then((result) => {
-                // Jika kasir menekan tombol "Ya, Hapus!"
                 if (result.isConfirmed) {
                     let master = getMasterProduk();
                     if (master.hasOwnProperty(namaKey)) {
                         delete master[namaKey];
                         localStorage.setItem('master_produk_toko', JSON.stringify(master));
                         
-                        // Segarkan data drop-down dan tabel master di latar belakang
                         buatRekomendasiBarang();
-                        
-                        // Buka kembali jendela "Atur Produk" agar tabelnya terupdate otomatis
                         bukaManajemenHarga(); 
 
-                        // Tampilkan notifikasi sukses kecil yang menutup sendiri
                         Swal.fire({
                             title: "Terhapus!",
                             text: `Produk "${namaKey}" berhasil dihapus.`,
@@ -1079,7 +1046,6 @@
                         });
                     }
                 } else {
-                    // Jika kasir menekan "Batal", panggil kembali menu utama Atur Produk agar pop-up tidak menutup total
                     bukaManajemenHarga();
                 }
             });
