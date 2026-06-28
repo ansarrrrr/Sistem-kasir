@@ -51,11 +51,10 @@
             align-items: center;
         }
 
+        /* PERBAIKAN: Mengubah agar teks nama barang panjang otomatis turun ke bawah */
         .col-nama {
             width: 35%;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
+            word-break: break-word;
             padding-right: 5px;
         }
 
@@ -913,7 +912,7 @@
                         <div class="card p-2 bg-light border text-start mb-3" style="font-size:0.85rem;">
                             <label class="fw-bold text-secondary mb-1" id="swalLabelInput">➕ Tambah / Update Produk:</label>
                             <input type="text" id="swalNamaBarang" class="form-control form-control-sm mb-2" placeholder="Nama Barang (Misal: Es Kulkul)">
-                            <input type="text" id="swalHargaBarangTampilan" inputmode=\"numeric\" class="form-control form-control-sm mb-2" placeholder="Harga Satuan (Misal: 5.000)">
+                            <input type="text" id="swalHargaBarangTampilan" inputmode="numeric" class="form-control form-control-sm mb-2" placeholder="Harga Satuan (Misal: 5.000)">
                             <button class="btn btn-primary btn-sm w-100 fw-bold" id="swalBtnSimpan" onclick="simpanMasterProduk()">💾 Simpan ke Sistem</button>
                         </div>
 
