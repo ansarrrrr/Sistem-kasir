@@ -51,7 +51,6 @@
             align-items: center;
         }
 
-        /* PERBAIKAN: Mengubah agar teks nama barang panjang otomatis turun ke bawah */
         .col-nama {
             width: 35%;
             word-break: break-word;
@@ -161,7 +160,7 @@
                             <div class="input-group">
                                 <input type="text" id="namaBarang" class="form-control" placeholder="Contoh: Kopi Susu"
                                     list="listBarang" oninput="autoFillHarga()" required>
-                                <button class="btn btn-outline-secondary text-danger" type="button" onclick="document.getElementById('namaBarang').value = ''; document.getElementById('hargaTampilan').value = ''; document.getElementById('jumlahPembelian').value = ''; hargaAsli = 0; hitungKalkulatorSeketika(); document.getElementById('namaBarang').focus();" title="Kosongkan Semua Inputan">❌</button>
+                                <button class="btn btn-outline-secondary text-danger" type="button" onclick="document.getElementById('namaBarang').value = ''; document.getElementById('hargaTampilan').value = ''; document.getElementById('hargaTampilan').readOnly = false; document.getElementById('jumlahPembelian').value = ''; hargaAsli = 0; hitungKalkulatorSeketika(); document.getElementById('namaBarang').focus();" title="Kosongkan Semua Inputan">❌</button>
                             </div>
                             <datalist id="listBarang"></datalist>
                         </div>
@@ -587,6 +586,7 @@
 
             document.getElementById('namaBarang').value = "";
             inputHargaTampilan.value = "";
+            inputHargaTampilan.readOnly = false; // Buka kunci saat form di-reset otomatis
             inputJumlah.value = "";
             hargaAsli = 0;
 
@@ -690,6 +690,15 @@
             document.getElementById('namaBarang').value = nama;
             inputHargaTampilan.value = formatRupiah(price);
             hargaAsli = price;
+            
+            // Logika penguncian saat siap edit mengikuti apakah barang terdaftar di master
+            const daftarProduk = getMasterProduk();
+            if (daftarProduk.hasOwnProperty(nama)) {
+                inputHargaTampilan.readOnly = true;
+            } else {
+                inputHargaTampilan.readOnly = false;
+            }
+            
             inputJumlah.value = jumlah;
             document.getElementById('jenisPembayaran').value = pembayaran;
 
@@ -796,6 +805,8 @@
             document.getElementById('boxSplitPembayaran').classList.add('d-none');
             document.getElementById('checkSplitTF').checked = false;
 
+            inputHargaTampilan.readOnly = false; // Kembalikan ke mode normal (bisa diklik) saat form di-reset manual
+
             aturTampilanInputPembayaran();
             buatRekomendasiBarang();
         }
@@ -875,6 +886,7 @@
             }
         }
 
+        // PERBAIKAN LOGIKA: Kunci harga jika terdeteksi produk terdaftar (auto-fill), buka kunci jika mengetik produk baru
         function autoFillHarga() {
             const namaInput = document.getElementById('namaBarang').value;
             const inputHarga = document.getElementById('hargaTampilan');
@@ -884,7 +896,10 @@
                 let harga = daftarProduk[namaInput];
                 hargaAsli = harga;
                 inputHarga.value = formatRupiah(harga);
+                inputHarga.readOnly = true; // KUNCI KOLOM HARGA (tidak bisa diklik)
                 hitungKalkulatorSeketika();
+            } else {
+                inputHarga.readOnly = false; // BUKA KUNCI (bisa diklik/diisi manual untuk produk baru)
             }
         }
 
