@@ -74,6 +74,17 @@
         }
 
         /* ==========================================================================
+           REVISI FITUR: STYLE KHUSUS INPUTAN SAAT TERKUNCI (READ-ONLY)
+           ========================================================================== */
+        #namaBarang:read-only,
+        #hargaTampilan:read-only {
+            background-color: #e9ecef !important; /* Warna abu-abu penanda terkunci */
+            color: #6c757d; /* Warna teks agak redup */
+            cursor: not-allowed; /* Mengubah kursor mouse menjadi tanda blokir */
+            border-color: #dee2e6;
+        }
+
+        /* ==========================================================================
            DESAIN KHUSUS SAAT DI-DOWNLOAD KE PDF (HANYA DATA UTAMA & OMSET)
            ========================================================================== */
         @media print {
@@ -81,7 +92,8 @@
             .col-lg-4,
             #formPenjualan,
             #formTitle,
-            .mb-select-bayar {
+            .mb-select-bayar,
+            .btn-block-privasi {
                 display: none !important;
             }
 
@@ -160,7 +172,7 @@
                             <div class="input-group">
                                 <input type="text" id="namaBarang" class="form-control" placeholder="Contoh: Kopi Susu"
                                     list="listBarang" oninput="autoFillHarga()" required>
-                                <button class="btn btn-outline-secondary text-danger" type="button" onclick="document.getElementById('namaBarang').value = ''; document.getElementById('hargaTampilan').value = ''; document.getElementById('hargaTampilan').readOnly = false; document.getElementById('jumlahPembelian').value = ''; hargaAsli = 0; hitungKalkulatorSeketika(); document.getElementById('namaBarang').focus();" title="Kosongkan Semua Inputan">❌</button>
+                                <button class="btn btn-outline-secondary text-danger" type="button" onclick="document.getElementById('namaBarang').value = ''; document.getElementById('namaBarang').readOnly = false; document.getElementById('hargaTampilan').value = ''; document.getElementById('hargaTampilan').readOnly = false; document.getElementById('jumlahPembelian').value = ''; hargaAsli = 0; hitungKalkulatorSeketika(); document.getElementById('namaBarang').focus();" title="Kosongkan Semua Inputan">❌</button>
                             </div>
                             <datalist id="listBarang"></datalist>
                         </div>
@@ -261,23 +273,29 @@
 
             <div class="col-12 col-lg-8">
 
+                <div class="mb-3 btn-block-privasi">
+                    <button class="btn btn-outline-secondary w-100 fw-bold shadow-sm py-2" type="button" id="btnToggleOmset" onclick="togglePrivasiOmset()">
+                        👁️ Sembunyikan Semua Nominal Omset Toko
+                    </button>
+                </div>
+
                 <div class="row g-3 mb-4">
                     <div class="col-12 col-sm-4">
                         <div class="card card-summary p-3 bg-white border-success h-100">
-                            <small class="text-muted fw-bold text-uppercase">💰 Omset Sesuai Sistem (CASH)</small>
-                            <h4 class="text-success fw-bold m-0 mt-1" id="totalCashToko">Rp 0</h4>
+                            <small class="text-success fw-bold text-uppercase">💰 Omset Sistem (CASH)</small>
+                            <h4 class="text-dark fw-bold m-0 mt-1" id="totalCashToko">Rp 0</h4>
                         </div>
                     </div>
                     <div class="col-12 col-sm-4">
                         <div class="card card-summary p-3 bg-white border-info h-100">
-                            <small class="text-muted fw-bold text-uppercase">📱 Omset Sesuai Sistem (TF)</small>
-                            <h4 class="text-info fw-bold m-0 mt-1" id="totalTfToko">Rp 0</h4>
+                            <small class="text-info fw-bold text-uppercase">📱 Omset Sistem (TF)</small>
+                            <h4 class="text-dark fw-bold m-0 mt-1" id="totalTfToko">Rp 0</h4>
                         </div>
                     </div>
                     <div class="col-12 col-sm-4">
                         <div class="card card-summary p-3 bg-white border-primary h-100">
-                            <small class="text-muted fw-bold text-uppercase">📊 Total Semua Omset</small>
-                            <h4 class="text-primary fw-bold m-0 mt-1" id="totalSemuaToko">Rp 0</h4>
+                            <small class="text-primary fw-bold text-uppercase">📊 Total Semua Omset</small>
+                            <h4 class="text-dark fw-bold m-0 mt-1" id="totalSemuaToko">Rp 0</h4>
                         </div>
                     </div>
                 </div>
@@ -298,7 +316,7 @@
                                 <div class="small fw-semibold text-muted">Selisih / Status Laci:</div>
                                 <div class="d-flex align-items-center mt-1">
                                     <span id="statusLaciBadge" class="status-badge bg-secondary text-white me-2">Belum Diinput</span>
-                                    <h4 class="m-0 fw-bold" id="textSelisih">Rp 0</h4>
+                                    <h4 class="m-0 fw-bold text-dark" id="textSelisih">Rp 0</h4>
                                 </div>
                             </div>
                         </div>
@@ -308,7 +326,7 @@
                 <div class="card p-4">
                     <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
                         <h3 class="fw-bold text-secondary m-0">📊 Riwayat Penjualan</h3>
-                        <div class="d-flex gap-2">
+                        <div class="d-flex gap-2 align-items-center">
                             <button class="btn btn-danger btn-pdf fw-bold shadow-sm" onclick="downloadPDFDataOnly()">📄
                                 Download PDF Data</button>
                             <button class="btn btn-outline-danger btn-sm" onclick="bersihkanSemuaData()" title="Hapus Data">🗑️</button>
@@ -354,6 +372,10 @@
         let uangDiterimaAsli = 0;
 
         let antreanKeranjangSeketika = [];
+
+        let isOmsetTersembunyi = false;
+        let nilaiCashAsliSimpanan = 0;
+        let nilaiTfAsliSimpanan = 0;
 
         function formatRupiah(angka) {
             if (angka < 0) {
@@ -407,7 +429,6 @@
             const checkSplitTF = document.getElementById('checkSplitTF');
             const jenisBayar = document.getElementById('jenisPembayaran').value;
 
-            // JIKA JENIS PEMBAYARAN ADALAH TF, ABAIKAN LOGIKA CASH DI BAWAH
             if (jenisBayar === "TF") {
                 return;
             }
@@ -421,7 +442,6 @@
                     boxSplit.classList.add('d-none');
                     checkSplitTF.checked = false;
 
-                    // Aktifkan jika Jenis Pembayaran sudah dipilih (Cash)
                     if (jenisBayar === "Cash") {
                         btnSelesai.disabled = false;
                         btnSelesai.className = "btn btn-success btn-lg w-100 fw-bold shadow-sm mt-2";
@@ -490,9 +510,9 @@
 
             if (dataPenjualan.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-4">Belum ada data penjualan di perangkat ini.</td></tr>';
-                document.getElementById('totalCashToko').innerText = "Rp 0";
-                document.getElementById('totalTfToko').innerText = "Rp 0";
-                document.getElementById('totalSemuaToko').innerText = "Rp 0";
+                nilaiCashAsliSimpanan = 0;
+                nilaiTfAsliSimpanan = 0;
+                perbaruiTampilanOmsetDOM(0, 0);
                 omsetCashSistem = 0;
                 hitungSelisihLaci();
                 return;
@@ -530,12 +550,39 @@
             });
 
             omsetCashSistem = r_cash;
-            document.getElementById('totalCashToko').innerText = "Rp " + formatRupiah(r_cash);
-            document.getElementById('totalTfToko').innerText = "Rp " + formatRupiah(r_tf);
-            document.getElementById('totalSemuaToko').innerText = "Rp " + formatRupiah(r_cash + r_tf);
+            nilaiCashAsliSimpanan = r_cash;
+            nilaiTfAsliSimpanan = r_tf;
+            
+            perbaruiTampilanOmsetDOM(r_cash, r_tf);
             hitungSelisihLaci();
         }
 
+        function perbaruiTampilanOmsetDOM(cash, tf) {
+            if (isOmsetTersembunyi) {
+                document.getElementById('totalCashToko').innerText = "******";
+                document.getElementById('totalTfToko').innerText = "******";
+                document.getElementById('totalSemuaToko').innerText = "******";
+            } else {
+                document.getElementById('totalCashToko').innerText = "Rp " + formatRupiah(cash);
+                document.getElementById('totalTfToko').innerText = "Rp " + formatRupiah(tf);
+                document.getElementById('totalSemuaToko').innerText = "Rp " + formatRupiah(cash + tf);
+            }
+        }
+
+        function togglePrivasiOmset() {
+            isOmsetTersembunyi = !isOmsetTersembunyi;
+            const btn = document.getElementById('btnToggleOmset');
+            
+            if (isOmsetTersembunyi) {
+                btn.innerText = "👁️ Tampilkan Semua Nominal Omset Toko";
+                btn.className = "btn btn-secondary w-100 fw-bold shadow-sm py-2";
+            } else {
+                btn.innerText = "👁️ Sembunyikan Semua Nominal Omset Toko";
+                btn.className = "btn btn-outline-secondary w-100 fw-bold shadow-sm py-2";
+            }
+            
+            perbaruiTampilanOmsetDOM(nilaiCashAsliSimpanan, nilaiTfAsliSimpanan);
+        }
 
         document.getElementById('formPenjualan').addEventListener('submit', function (e) {
             e.preventDefault();
@@ -584,9 +631,11 @@
             document.getElementById('labelSubtotal').innerText = "Subtotal (Barang Terakhir):";
             document.getElementById('infoMultiBarang').querySelector('span:first-child').innerText = `Total Gabungan (${antreanKeranjangSeketika.length} Barang):`;
 
+            // Kembalikan form ke status awal pasca submit
             document.getElementById('namaBarang').value = "";
+            document.getElementById('namaBarang').readOnly = false;
             inputHargaTampilan.value = "";
-            inputHargaTampilan.readOnly = false; // Buka kunci saat form di-reset otomatis
+            inputHargaTampilan.readOnly = false;
             inputJumlah.value = "";
             hargaAsli = 0;
 
@@ -691,11 +740,12 @@
             inputHargaTampilan.value = formatRupiah(price);
             hargaAsli = price;
             
-            // Logika penguncian saat siap edit mengikuti apakah barang terdaftar di master
             const daftarProduk = getMasterProduk();
             if (daftarProduk.hasOwnProperty(nama)) {
+                document.getElementById('namaBarang').readOnly = true;
                 inputHargaTampilan.readOnly = true;
             } else {
+                document.getElementById('namaBarang').readOnly = false;
                 inputHargaTampilan.readOnly = false;
             }
             
@@ -703,7 +753,6 @@
             document.getElementById('jenisPembayaran').value = pembayaran;
 
             perbaruiTampilanRincian();
-
             aturTampilanInputPembayaran();
 
             document.getElementById('boxSplitPembayaran').classList.add('d-none');
@@ -805,7 +854,8 @@
             document.getElementById('boxSplitPembayaran').classList.add('d-none');
             document.getElementById('checkSplitTF').checked = false;
 
-            inputHargaTampilan.readOnly = false; // Kembalikan ke mode normal (bisa diklik) saat form di-reset manual
+            document.getElementById('namaBarang').readOnly = false;
+            inputHargaTampilan.readOnly = false;
 
             aturTampilanInputPembayaran();
             buatRekomendasiBarang();
@@ -886,20 +936,26 @@
             }
         }
 
-        // PERBAIKAN LOGIKA: Kunci harga jika terdeteksi produk terdaftar (auto-fill), buka kunci jika mengetik produk baru
+        // REVISI FITUR: Tambah logika penguncian kolom Nama Barang saat auto-fill terdeteksi
         function autoFillHarga() {
-            const namaInput = document.getElementById('namaBarang').value;
+            const inputNama = document.getElementById('namaBarang');
+            const namaInputVal = inputNama.value;
             const inputHarga = document.getElementById('hargaTampilan');
             const daftarProduk = getMasterProduk();
             
-            if (daftarProduk.hasOwnProperty(namaInput)) {
-                let harga = daftarProduk[namaInput];
+            if (daftarProduk.hasOwnProperty(namaInputVal)) {
+                let harga = daftarProduk[namaInputVal];
                 hargaAsli = harga;
                 inputHarga.value = formatRupiah(harga);
-                inputHarga.readOnly = true; // KUNCI KOLOM HARGA (tidak bisa diklik)
+                
+                // MENGUNCI KEDUA INPUTAN SEKALIGUS
+                inputNama.readOnly = true; 
+                inputHarga.readOnly = true; 
+                
                 hitungKalkulatorSeketika();
             } else {
-                inputHarga.readOnly = false; // BUKA KUNCI (bisa diklik/diisi manual untuk produk baru)
+                inputNama.readOnly = false;
+                inputHarga.readOnly = false;
             }
         }
 
